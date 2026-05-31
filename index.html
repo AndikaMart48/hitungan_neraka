@@ -267,17 +267,7 @@ document.getElementById('inputFoto').addEventListener('change', function(e){
   }
 });
 
-document.getElementById('btnSuara').addEventListener('click', ()=>{
-  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  audioCtx.resume().then(()=>{
-    playBeep(523, 0.1);
-    document.getElementById('hint').innerText = '✅ SUARA AKTIF!';
-    document.getElementById('hint').style.background = '#003300';
-    document.getElementById('hint').style.color = '#00ff00';
-    document.getElementById('btnSuara').innerText = '🔊 SUARA ON';
-    document.getElementById('btnSuara').disabled = true;
-  });
-});
+
 
 function playBeep(freq, dur){
   if(!audioCtx) return;
