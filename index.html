@@ -434,6 +434,161 @@ document.getElementById('game').addEventListener('touchend', e=>{
     if(dy<-30) move('atas');
   }
 });
+let board = [];
+let skor = 0;
+let best = parseInt(localStorage.getItem('best2048marut') || 0);
+document.getElementById('best').innerText = best;
+
+// LOAD FOTO
+let fotoSimpan = localStorage.getItem('fotoProfilMarut');
+if(fotoSimpan) document.getElementById('fotoProfil').src = fotoSimpan;
+
+// UPLOAD FOTO
+document.getElementById('inputFoto').addEventListener('change', function(e){
+  let file = e.target.files[0];
+  if(file){
+    let reader = new FileReader();
+    reader.onload = function(event){
+      document.getElementById('fotoProfil').src = event.target.result;
+      localStorage.setItem('fotoProfilMarut', event.target.result);
+    }
+    reader.readAsDataURL(file);
+  }
+});
+
+function init(){
+  board = Array(4).fill().map(()=>Array(4).fill(0));
+  skor = 0;
+  document.getElementById('msg').style.display = 'none';
+  updateSkor();
+  addTile();
+  addTile();
+  draw();
+}
+
+function addTile(){
+  let kosong = [];
+  for(let i=0; i<4; i++) for(let j=0; j<4; j++) if(board[i][j]==0) kosong.push([i,j]);
+  if(kosong.length>0){
+    let [i,j] = kosong[Math.floor(Math.random()*kosong.length)];
+    board[i][j] = Math.random()<0.9? 2 : 4;
+  }
+}
+
+function draw(){
+  let game = document.getElementById('game');
+  game.innerHTML = '';
+  for(let i=0; i<4; i++){
+    for(let j=0; j<4; j++){
+      let div = document.createElement('div');
+      div.className = 'cell';
+      if(board[i][j]>0){
+        div.innerText = board[i][j];
+        div.classList.add('tile-'+board[i][j]);
+      }
+      game.appendChild(div);
+    }
+  }
+}
+
+function geser(baris){
+  let baru = baris.filter(x=>x>0);
+  for(let i=0; i<baru.length-1; i++){
+    if(baru[i]==baru[i+1]){
+      baru[i] *= 2;
+      skor += baru[i];
+      baru.splice(i+1,1);
+    }
+  }
+  while(baru.length<4) baru.push(0);
+  return baru;
+}
+
+function move(arah){
+  let berubah = false;
+  let bLama = JSON.stringify(board);
+
+  if(arah=='kiri'){
+    for(let i=0; i<4; i++) board[i] = geser(board[i]);
+  }
+  if(arah=='kanan'){
+    for(let i=0; i<4; i++) board[i] = geser(board[i].reverse()).reverse();
+  }
+  if(arah=='atas'){
+    for(let j=0; j<4; j++){
+      let col = [board[0][j],board[1][j],board[2][j],board[3][j]];
+      col = geser(col);
+      for(let i=0; i<4; i++) board[i][j] = col[i];
+    }
+  }
+  if(arah=='bawah'){
+    for(let j=0; j<4; j++){
+      let col = [board[0][j],board[1][j],board[2][j],board[3][j]].reverse();
+      col = geser(col).reverse();
+      for(let i=0; i<4; i++) board[i][j] = col[i];
+    }
+  }
+
+  if(JSON.stringify(board)!=bLama){
+    addTile();
+    updateSkor();
+    draw();
+    cekGameOver();
+  }
+}
+
+function updateSkor(){
+  document.getElementById('skor').innerText = skor;
+  if(skor>best){
+    best = skor;
+    localStorage.setItem('best2048marut', best);
+    document.getElementById('best').innerText = best;
+  }
+}
+
+// INI YANG GUE GANTI BOS - GAME OVER LEBIH SOPAN WKWK
+function cekGameOver(){
+  let penuh = true;
+  let bisaMerge = false;
+  for(let i=0; i<4; i++) for(let j=0; j<4; j++){
+    if(board[i][j]==0) penuh=false;
+    if(i<3 && board[i][j]==board[i+1][j]) bisaMerge=true;
+    if(j<3 && board[i][j]==board[i][j+1]) bisaMerge=true;
+  }
+
+  if(penuh &&!bisaMerge){
+    document.getElementById('msgText').innerText = 'GAME OVER BOS';
+    document.getElementById('msgSub').innerText = 'belajar hitung lagi ya';
+    document.getElementById('msg').style.display = 'block';
+  }
+}
+
+function restart(){ init(); }
+
+// KONTROL
+document.addEventListener('keydown', e=>{
+  if(e.key=='ArrowLeft') move('kiri');
+  if(e.key=='ArrowRight') move('kanan');
+  if(e.key=='ArrowUp') move('atas');
+  if(e.key=='ArrowDown') move('bawah');
+});
+
+let startX, startY;
+document.getElementById('game').addEventListener('touchstart', e=>{
+  startX = e.touches[0].clientX;
+  startY = e.touches[0].clientY;
+});
+document.getElementById('game').addEventListener('touchend', e=>{
+  let dx = e.changedTouches[0].clientX - startX;
+  let dy = e.changedTouches[0].clientY - startY;
+  if(Math.abs(dx)>Math.abs(dy)){
+    if(dx>30) move('kanan');
+    if(dx<-30) move('kiri');
+  } else {
+    if(dy>30) move('bawah');
+    if(dy<-30) move('atas');
+  }
+});
 
 init();
 </script>
